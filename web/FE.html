@@ -1,33 +1,33 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>WebSocket Client</title>
-</head>
 <body>
-    <h1>WebSocket Client</h1>
-    <input type="text" id="message" placeholder="Nhập tin nhắn">
-    <button onclick="sendMessage()">Gửi</button>
-    <ul id="messages"></ul>
+<h1>WebSocket Test</h1>
+<button id="btn" onclick="sendHello()" disabled>Hello</button>
+<pre id="log"></pre> <!-- phải có id="log" -->
 
-    <script>
-        // Kết nối đến server, thay "192.168.1.100" bằng IP máy chạy server
-        const ws = new WebSocket("ws://192.168.1.100:9002");
+<script>
+let btn = document.getElementById("btn");
+let ws = new WebSocket("ws://192.168.2.152:9000"); // IP server
 
-        ws.onopen = () => {
-            console.log("Connected to server");
-        };
+ws.onopen = () => {
+    log("Connected!");
+    btn.disabled = false;
+};
 
-        ws.onmessage = (event) => {
-            const li = document.createElement("li");
-            li.textContent = "Server: " + event.data;
-            document.getElementById("messages").appendChild(li);
-        };
+ws.onmessage = (e) => log("Server replied: " + e.data);
 
-        function sendMessage() {
-            const msg = document.getElementById("message").value;
-            ws.send(msg);
-        }
-    </script>
+function sendHello() {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send("Hello");
+    } else {
+        log("WebSocket chưa kết nối xong.");
+    }
+}
+
+function log(msg) {
+    const logEl = document.getElementById("log");
+    if (logEl) logEl.textContent += msg + "\n";
+}
+</script>
 </body>
 </html>
