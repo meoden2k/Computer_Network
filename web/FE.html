@@ -14,7 +14,7 @@ ws.onopen = () => {
     btn.disabled = false;
 };
 
-ws.onmessage = (e) => log("Server replieeeed: " + e.data);
+ws.onmessage = (e) => log("Server replied: " + e.data);
 
 function sendHello() {
     if (ws.readyState === WebSocket.OPEN) {
