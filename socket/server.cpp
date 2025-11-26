@@ -20,19 +20,23 @@
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    std::cout << "Received: " << msg->get_payload() << std::endl;
+void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr msg) {
+    std::string received = msg->get_payload();
+    std::cout << "Received: " << received << std::endl;
+
+    // Gửi trả lại client
+    s->send(hdl, "Server received: " + received, websocketpp::frame::opcode::text);
 }
 
 int main() {
 
     //----> COMPILE = g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32
-
+    
     server s;
 
     try {
         s.init_asio();
-        s.set_message_handler(&on_message);
+        s.set_message_handler(std::bind(&on_message, &s, std::placeholders::_1, std::placeholders::_2));
 
         s.listen(9000);          // Cổng server
         s.start_accept();
