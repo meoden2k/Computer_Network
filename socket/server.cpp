@@ -16,16 +16,29 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
+#include "../application/ListApp.cpp"  // Chèn hàm liệt kê ứng dụng đã cài đặt
+#include "../application/StartApp.cpp" // Chèn hàm khởi động ứng dụng
+
 #include <iostream>
+#include <string>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr msg) {
     std::string received = msg->get_payload();
     std::cout << "Received: " << received << std::endl;
+    if (received == "list_apps") {
+        // Gọi hàm liệt kê ứng dụng và gửi kết quả về client
+        std::string app_list = ListApplication(); // Giả sử hàm này trả về danh sách ứng dụng đã cài đặt
+        s->send(hdl, app_list, msg->get_opcode());
+    }
 
-    // Gửi trả lại client
-    s->send(hdl, "Server received: " + received, websocketpp::frame::opcode::text);
+    if (received.rfind("start_app:", 0) == 0) {
+        std::string app_to_start = received.substr(10); // Lấy tên ứng dụng sau "start_app:"
+        StartApplication(app_to_start); // Giả sử hàm này khởi động ứng dụng
+        s->send(hdl, "Starting application: " + app_to_start, msg->get_opcode());
+    }
+
 }
 
 int main() {
@@ -35,6 +48,10 @@ int main() {
     server s;
 
     try {
+        // comment 2 dong nay roi chay List App se ra chu TRUNG QUOC
+        s.clear_access_channels(websocketpp::log::alevel::all);
+        s.clear_error_channels(websocketpp::log::elevel::all);
+
         s.init_asio();
         s.set_message_handler(std::bind(&on_message, &s, std::placeholders::_1, std::placeholders::_2));
 
@@ -43,7 +60,8 @@ int main() {
 
         std::cout << "Server running at ws://localhost:9000\n";
         s.run();  // chạy event loop
-    } catch (const std::exception& e) {
+    } 
+    catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
