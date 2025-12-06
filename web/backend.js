@@ -5,7 +5,9 @@ ws.onopen = () => {
     
 };
 
-ws.onmessage = (e) => log("Server replied: " + e.data);
+// // Mỗi khi server gửi lại client bằng s->send thì
+// // data được truyền vào "e"
+// ws.onmessage = (e) => log("Server replied: " + e.data);
 
 function sendHello() {
     if (ws.readyState === WebSocket.OPEN) {
@@ -31,12 +33,37 @@ function listApp(){
     }
 }
 
-let startApp = document.getElementById("StartApp");
-function StartApp(){
-        if (ws.readyState === WebSocket.OPEN){
-        ws.send("list_apps");
+function StartApp(event){
+
+    event.preventDefault();
+
+    const appNameInput = document.getElementById('startapp');
+    const applicationName = appNameInput.value;
+
+    if (ws.readyState === WebSocket.OPEN){
+        ws.send("start_app:" + applicationName);
+        appNameInput.value = ""
     }
     else {
         log("WebSocket chưa kết nối xong.");
     }
 }
+let startApp = document.getElementById("StartApp");
+startApp.addEventListener('submit', StartApp);
+
+function StopApp(event){
+    event.preventDefault();
+
+    const appNameInput = document.getElementById('stopapp');
+    const applicationName = appNameInput.value;
+
+    if (ws.readyState === WebSocket.OPEN){
+        ws.send("stop_app:" + applicationName);
+        appNameInput.value = ""
+    }
+    else {
+        log("WebSocket chưa kết nối xong.");
+    }
+}
+let stopApp = document.getElementById("StopApp");
+stopApp.addEventListener('submit', StopApp)

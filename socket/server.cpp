@@ -16,8 +16,9 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
-#include "../application/ListApp.cpp"  // Chèn hàm liệt kê ứng dụng đã cài đặt
-#include "../application/StartApp.cpp" // Chèn hàm khởi động ứng dụng
+#include "../Application/ListApp.cpp"  // Chèn hàm liệt kê ứng dụng đã cài đặt
+#include "../Application/StartApp.cpp" // Chèn hàm khởi động ứng dụng
+#include "../Application/StopApp.cpp"  // Chèn hàm tắt ứng dụng
 
 #include <iostream>
 #include <string>
@@ -35,15 +36,29 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
 
     if (received.rfind("start_app:", 0) == 0) {
         std::string app_to_start = received.substr(10); // Lấy tên ứng dụng sau "start_app:"
-        StartApplication(app_to_start); // Giả sử hàm này khởi động ứng dụng
+        if (!StartApplication(app_to_start)) {
+            std::cout << "Failed to start application: " << app_to_start << std::endl;
+            s->send(hdl, "Failed to start application: " + app_to_start, msg->get_opcode());
+            return;
+        } 
         s->send(hdl, "Starting application: " + app_to_start, msg->get_opcode());
     }
 
+    if (received.rfind("stop_app:", 0) == 0) {
+        std::string app_to_stop = received.substr(9); // Lấy tên ứng dụng sau "stop_app:"
+        if (!StopApplication(app_to_stop)) {
+            std::cout << "Failed to stop application: " << app_to_stop << std::endl;
+            s->send(hdl, "Failed to stop application: " + app_to_stop, msg->get_opcode());
+            return;
+        } 
+        s->send(hdl, "Stopping application: " + app_to_stop, msg->get_opcode());
+    }
 }
 
 int main() {
 
-    //----> COMPILE = g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32
+    //----> COMPILE = 
+    // g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32
     
     server s;
 
