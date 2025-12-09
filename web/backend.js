@@ -1,6 +1,11 @@
 let ws = new WebSocket("ws://192.168.2.152:9000"); // IP server
 ws.binaryType = "arraybuffer";
 
+// Nếu flag = 0 thì đây là msg bth
+// flag = 1 thì screenshot
+// flag = 2 thì webcam
+let flag = -1
+
 ws.onopen = () => {
     log("Connected!");
     
@@ -9,10 +14,8 @@ ws.onopen = () => {
 // // Mỗi khi server gửi lại client bằng s->send thì
 // // data được truyền vào "e"
 ws.onmessage = (event) => {
-    console.log("Đã nhận dữ liệu từ Server:", event.data); // Kiểm tra Console F12
 
     if (event.data instanceof ArrayBuffer) {
-        console.log("--> Là dữ liệu nhị phân (Ảnh), kích thước:", event.data.byteLength);
         
         // Tạo ảnh
         let bytes = new Uint8Array(event.data);
@@ -29,11 +32,43 @@ ws.onmessage = (event) => {
             document.body.appendChild(img);
         }
         img.src = url;
-    } else {
+    } 
+    else {
         console.log("--> Là tin nhắn văn bản:", event.data);
     }
-};
 
+    // 2. Tạo Blob từ ArrayBuffer nhận được
+    const blob = new Blob([event.data], { type: 'video/mp4' });
+
+    // 3. Tạo URL ảo
+    const videoUrl = URL.createObjectURL(blob);
+
+    // 4. Gán vào Video Player
+    const videoPlayer = document.getElementById('videoPlayer');
+            
+    // Xóa URL cũ để giải phóng bộ nhớ (nếu có)
+    if (videoPlayer.src) {
+        URL.revokeObjectURL(videoPlayer.src);
+    }
+
+    videoPlayer.src = videoUrl;
+            
+    videoPlayer.play()
+        .then(() => console.log("Đang phát video"))
+        .catch(e => console.error("Lỗi Autoplay:", e));
+
+    document.getElementById('status').innerText = "Đang phát video.";
+}
+
+function HandleClientMSG(data){
+    if (data == "screenshot"){
+        flag = 1;
+    }
+    else if (data == "webcam"){
+        flag = 2;
+    }
+    else flag = 0
+}
 
 function sendHello() {
     if (ws.readyState === WebSocket.OPEN) {
@@ -99,6 +134,15 @@ stopApp.addEventListener('submit', StopApp)
 function screenShot(){
     if (ws.readyState === WebSocket.OPEN){
         ws.send("screenshot");
+    }
+    else {
+        log("WebSocket chưa kết nối xong.");
+    }
+}
+
+function webCam(){
+    if (ws.readyState === WebSocket.OPEN){
+        ws.send("webcam");
     }
     else {
         log("WebSocket chưa kết nối xong.");

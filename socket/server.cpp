@@ -22,6 +22,8 @@
 
 #include "../Screen Shot/ScreenShot.cpp" // Chèn hàm chụp màn hình
 
+#include "../Webcam/Webcam.cpp" // Chèn hàm chụp ảnh từ webcam
+
 #include <iostream>
 #include <string>
 
@@ -38,7 +40,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
         s->send(hdl, app_list, msg->get_opcode());
     }
 
-    if (received.rfind("start_app:", 0) == 0) {
+    else if (received.rfind("start_app:", 0) == 0) {
         std::string app_to_start = received.substr(10); // Lấy tên ứng dụng sau "start_app:"
         if (!StartApplication(app_to_start)) {
             std::cout << "Failed to start application: " << app_to_start << std::endl;
@@ -48,7 +50,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
         s->send(hdl, "Starting application: " + app_to_start, msg->get_opcode());
     }
 
-    if (received.rfind("stop_app:", 0) == 0) {
+    else if (received.rfind("stop_app:", 0) == 0) {
         std::string app_to_stop = received.substr(9); // Lấy tên ứng dụng sau "stop_app:"
         if (!StopApplication(app_to_stop)) {
             std::cout << "Failed to stop application: " << app_to_stop << std::endl;
@@ -58,7 +60,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
         s->send(hdl, "Stopping application: " + app_to_stop, msg->get_opcode());
     }
 
-    if (received == "screenshot") {
+    else if (received == "screenshot") {
         // 1. Chụp màn hình và lưu vào file
         TakeScreenshot(); // Giả định thành công
 
@@ -80,6 +82,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
         std::vector<char> buffer(size);
         if (file.read(buffer.data(), size)) {
             // 3. Gửi nhị phân
+            s->send(hdl, received, msg->get_opcode()); // Gửi thông báo trước khi gửi file
             s->send(hdl, buffer.data(), buffer.size(), websocketpp::frame::opcode::binary);
             std::cout << "Sent " << size << " bytes of screenshot.\n";
         } 
@@ -96,12 +99,65 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
             std::cerr << "Warning: Could not delete temporary screenshot file.\n";
         }
     }
+
+    else if (received == "webcam") {
+        CaptureWebcamImage(); // Quay webcam và lưu file thành "webcam.mp4"
+
+        // 1. Tên file phải khớp với tên file output trong hàm quay phim
+        const std::string filename = "webcam.mp4"; 
+
+        // Mở file ở chế độ Binary + At End (để lấy size)
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+        
+        if (!file.is_open()) {
+            std::cerr << "Error! File not found: " << filename << "\n";
+            return;
+        }
+
+        // Lấy kích thước file
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg); // Quay lại đầu file để đọc
+
+        // Kiểm tra dung lượng (10s video ~ vài MB, vector chịu được)
+        // Nếu file > 100MB thì nên chia nhỏ (chunking), nhưng 10s thì load hết vào RAM ok.
+        std::vector<char> buffer(size);
+
+        // 2. Đọc toàn bộ file vào buffer
+        if (file.read(buffer.data(), size)) {
+            std::cout << "Sending MP4 file (" << size << " bytes) over WebSocket...\n";
+            
+            // 3. Gửi nhị phân (Opcode::binary)
+            try {
+                s->send(hdl, received, msg->get_opcode()); // Gửi thông báo trước khi gửi file
+                s->send(hdl, buffer.data(), buffer.size(), websocketpp::frame::opcode::binary);
+                std::cout << "Sent successfully!\n";
+            } catch (const websocketpp::exception & e) {
+                std::cerr << "Error sending WebSocket: " << e.what() << "\n";
+            }
+        } 
+        else {
+            std::cerr << "Error: Could not read file data.\n";
+        }
+
+        // 4. Dọn dẹp
+        file.close(); // Đảm bảo file được đóng trước khi xóa
+        if (std::remove(filename.c_str()) == 0) {
+            std::cout << "Deleted temporary screenshot file.\n";
+        } 
+        else {
+            std::cerr << "Warning: Could not delete temporary screenshot file.\n";
+        }
+    }
+
+    else {
+        s->send(hdl, "Unknown command: " + received, msg->get_opcode());
+    }
 }
 
 int main() {
 
     //----> COMPILE = 
-    // g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32 -lgdi32 -luser32
+    // g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32 -lgdi32 -luser32 -lmfplat -lmf -lmfreadwrite -lmfuuid -lshlwapi -lole32 -loleaut32
     
     server s;
 
