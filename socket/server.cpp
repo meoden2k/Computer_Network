@@ -157,7 +157,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, server::message_ptr 
 int main() {
 
     //----> COMPILE = 
-    // g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32 -lgdi32 -luser32 -lmfplat -lmf -lmfreadwrite -lmfuuid -lshlwapi -lole32 -loleaut32
+    // g++ -std=c++17 -I./ -I./asio/include server.cpp -o server.exe -lmswsock  -lws2_32 -lgdi32 -luser32 -lmfplat -lmf -lmfreadwrite -lmfuuid -lshlwapi -lole32 -loleaut32 -static-libstdc++ -static-libgcc
     
     server s;
 
