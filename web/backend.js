@@ -17,7 +17,6 @@ ws.onmessage = (event) => {
 
     if (flag == -1){
         HandleClientMSG(event.data);
-        return;
     }
 
     if (event.data instanceof ArrayBuffer) {
@@ -62,7 +61,7 @@ ws.onmessage = (event) => {
             document.getElementById('status').innerText = "Đang phát video.";
         }
     } 
-    else {
+    else if (flag == 0) {
         log(event.data);
     }
     flag = -1;
