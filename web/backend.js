@@ -18,7 +18,7 @@ ws.onmessage = (event) => {
     if (flag == -1){
         HandleClientMSG(event.data);
     }
-    
+
     if (event.data instanceof ArrayBuffer) {
         if (flag == 1){
             console.log("SCREENSHOT")
@@ -33,6 +33,7 @@ ws.onmessage = (event) => {
                 img = document.createElement("img");
                 img.id = "anhManHinh";
                 img.style.width = "80%"; // Chỉnh lại cho vừa màn hình
+                img.style.height = "80%";
                 img.style.border = "5px solid white"; // Viền đỏ cho dễ nhìn
                 document.body.appendChild(img);
             }
