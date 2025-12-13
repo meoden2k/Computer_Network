@@ -1,4 +1,4 @@
-let ws = new WebSocket("ws://192.168.2.152:9000"); // IP server
+let ws = new WebSocket("ws://192.168.2.117:9000"); // IP server
 ws.binaryType = "arraybuffer";
 
 // Nếu flag = 0 thì đây là msg bth
@@ -18,9 +18,10 @@ ws.onmessage = (event) => {
     if (flag == -1){
         HandleClientMSG(event.data);
     }
-
+    
     if (event.data instanceof ArrayBuffer) {
         if (flag == 1){
+            console.log("SCREENSHOT")
             // Tạo ảnh
             let bytes = new Uint8Array(event.data);
             let blob = new Blob([bytes], { type: "image/bmp" });
@@ -60,11 +61,12 @@ ws.onmessage = (event) => {
 
             document.getElementById('status').innerText = "Đang phát video.";
         }
+        flag = -1;
     } 
     else if (flag == 0) {
         log(event.data);
+        flag = -1;
     }
-    flag = -1;
 }
 
 function HandleClientMSG(data){
