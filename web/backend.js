@@ -1,4 +1,4 @@
-let ws = new WebSocket("ws://192.168.2.117:9000"); // IP server
+let ws = new WebSocket("ws://192.168.2.152:9000"); // IP server
 ws.binaryType = "arraybuffer";
 
 // Nếu flag = 0 thì đây là msg bth
@@ -23,47 +23,43 @@ ws.onmessage = (event) => {
         if (flag == 1){
             console.log("SCREENSHOT")
             // Tạo ảnh
-            let bytes = new Uint8Array(event.data);
-            let blob = new Blob([bytes], { type: "image/bmp" });
-            let url = URL.createObjectURL(blob);
-    
+            const blob = new Blob([event.data], { type: "image/bmp" });
+            const url = URL.createObjectURL(blob);
+
             // Tìm thẻ ảnh cũ để cập nhật, nếu chưa có thì tạo mới
             let img = document.getElementById("anhManHinh");
             if (!img) {
                 img = document.createElement("img");
                 img.id = "anhManHinh";
-                img.style.width = "80%"; // Chỉnh lại cho vừa màn hình
-                img.style.height = "80%";
-                img.style.border = "5px solid white"; // Viền đỏ cho dễ nhìn
+                img.style.width = "80%"; 
+                img.style.border = "5px solid white";
                 document.body.appendChild(img);
             }
             img.src = url;
         }
         else if (flag == 2){
-            // 2. Tạo Blob từ ArrayBuffer nhận được
             const blob = new Blob([event.data], { type: 'video/mp4' });
-
-            // 3. Tạo URL ảo
             const videoUrl = URL.createObjectURL(blob);
-
-            // 4. Gán vào Video Player
+            
             const videoPlayer = document.getElementById('videoPlayer');
-                    
+            
             // Xóa URL cũ để giải phóng bộ nhớ (nếu có)
             if (videoPlayer.src) {
                 URL.revokeObjectURL(videoPlayer.src);
             }
-
+            
             videoPlayer.src = videoUrl;
-                    
+            
             videoPlayer.play()
-                .then(() => console.log("Đang phát video"))
-                .catch(e => console.error("Lỗi Autoplay:", e));
-
-            document.getElementById('status').innerText = "Đang phát video.";
+            .then(() => console.log("Đang phát video"))
+            .catch(e => console.error("Lỗi Autoplay:", e));
         }
+        
+        // reset
+        console.log("WTF");
         flag = -1;
     } 
+    
     else if (flag == 0) {
         log(event.data);
         flag = -1;
