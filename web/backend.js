@@ -47,8 +47,6 @@ function checkServer(ip, port, doneCallback) {
     let testWS = new WebSocket(string);
     let isConnected = false;
 
-    console.log(string);
-    
     testWS.onopen = () => {
         console.log("FOUND SERVER AT: " + ip); // Log để dễ debug
         isConnected = true;
